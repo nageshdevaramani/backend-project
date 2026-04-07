@@ -1,1 +1,24 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
 
+    image: backend-app:latest
+
+    container_name: backend
+
+    restart: unless-stopped
+
+    ports:
+      - "5000:5000"
+
+    env_file:
+      - .env
+
+    networks:
+      - devops-net
+
+networks:
+  devops-net:
+    external: true
