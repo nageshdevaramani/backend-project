@@ -43,13 +43,18 @@ pipeline {
         stage('Deploy New Version') {
             steps {
                 sh '''
-                docker stop $CONTAINER_NAME || true
-                docker rm $CONTAINER_NAME || true
-
+                # Stop any container using port 5000
+                docker ps -q --filter "publish=5000" | xargs -r docker rm -f
+        
+                # Stop existing backend container
+                docker stop backend || true
+                docker rm backend || true
+        
                 docker run -d \
-                  --name $CONTAINER_NAME \
+                  --name backend \
                   -p 5000:5000 \
-                  $APP_NAME:$IMAGE_TAG
+                  --restart unless-stopped \
+                  backend-app:$IMAGE_TAG
                 '''
             }
         }
