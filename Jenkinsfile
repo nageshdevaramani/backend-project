@@ -57,7 +57,7 @@ pipeline {
         stage('Health Check') {
             steps {
                 script {
-                    sh 'sleep 10'  // wait for app to start
+                    sh 'sleep 15'  // wait for app to start
 
                     def status = sh(
                         script: 'curl -f http://localhost:5000/api/hello',
@@ -65,7 +65,9 @@ pipeline {
                     )
 
                     if (status != 0) {
+                         sh 'docker logs backend || true'  // 🔥 debug logs
                         error "Health check failed"
+                        
                     }
                 }
             }
