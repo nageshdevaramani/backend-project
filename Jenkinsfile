@@ -49,7 +49,7 @@ pipeline {
             }
         }
 
-        // 🔥 FIXED DEPLOYMENT
+        //  FIXED DEPLOYMENT
         stage('Deploy via Docker Compose') {
             steps {
                 sh '''
@@ -62,7 +62,7 @@ pipeline {
             }
         }
 
-        // 🔥 SMART HEALTH CHECK (FIRST-RUN SAFE)
+        //  SMART HEALTH CHECK (FIRST-RUN SAFE)
 stage('Health Check') {
     steps {
         script {
@@ -73,7 +73,7 @@ stage('Health Check') {
                 sh 'curl -f http://backend:5000/api/hello'
             }
 
-            echo "✅ Backend is reachable"
+            echo " Backend is reachable"
 
             echo "Checking via Nginx..."
 
@@ -90,7 +90,7 @@ stage('Health Check') {
 
     post {
         failure {
-            echo '❌ Deployment failed - Rolling back...'
+            echo ' Deployment failed - Rolling back...'
 
             sh '''
             PREV_TAG=$(cat prev_tag.txt)
@@ -104,17 +104,17 @@ stage('Health Check') {
                 docker-compose down || true
                 docker-compose up -d
             else
-                echo "⚠️ First deployment - No rollback available"
+                echo "First deployment - No rollback available"
             fi
             '''
         }
 
         success {
-            echo '✅ Deployment successful'
+            echo 'Deployment successful'
         }
 
         always {
-            echo '🧹 Cleaning unused images'
+            echo 'Cleaning unused images'
             sh 'docker image prune -f || true'
         }
     }
