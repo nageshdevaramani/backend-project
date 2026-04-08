@@ -65,7 +65,7 @@ pipeline {
 
                     retry(5) {
                         sleep 5
-                        sh 'curl -f http://localhost:5000/api/hello'
+                        sh 'curl -f http://localhost/api/hello'
                     }
                 }
             }
