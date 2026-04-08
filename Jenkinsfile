@@ -63,35 +63,29 @@ pipeline {
         }
 
         // 🔥 SMART HEALTH CHECK (FIRST-RUN SAFE)
-        stage('Health Check') {
-            steps {
-                script {
-                    echo "Checking backend directly..."
+stage('Health Check') {
+    steps {
+        script {
+            echo "Checking backend via Docker network..."
 
-                    // Step 1: Backend check
-                    def backendStatus = sh(
-                        script: 'curl -f http://localhost:5000/api/hello',
-                        returnStatus: true
-                    )
-
-                    if (backendStatus != 0) {
-                        error "❌ Backend is not healthy"
-                    }
-
-                    echo "✅ Backend is UP"
-
-                    // Step 2: Nginx check with retry
-                    echo "Checking via Nginx..."
-
-                    retry(10) {
-                        sleep 5
-                        sh 'curl -f http://localhost/api/hello'
-                    }
-
-                    echo "✅ Nginx routing is UP"
-                }
+            retry(10) {
+                sleep 5
+                sh 'curl -f http://backend:5000/api/hello'
             }
+
+            echo "✅ Backend is reachable"
+
+            echo "Checking via Nginx..."
+
+            retry(10) {
+                sleep 5
+                sh 'curl -f http://nginx/api/hello'
+            }
+
+            echo "✅ Nginx routing is working"
         }
+    }
+}
     }
 
     post {
