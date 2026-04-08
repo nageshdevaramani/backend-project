@@ -70,7 +70,7 @@ stage('Health Check') {
 
             retry(10) {
                 sleep 5
-                sh 'curl -f http://backends:5000/api/hello'
+                sh 'curl -f http://backend:5000/api/hello'
             }
 
             echo "✅ Backend is reachable"
@@ -79,7 +79,7 @@ stage('Health Check') {
 
             retry(10) {
                 sleep 5
-                sh 'curl -f http://nginx/api/helloo'
+                sh 'curl -f http://nginx/api/hello'
             }
 
             echo "✅ Nginx routing is working"
