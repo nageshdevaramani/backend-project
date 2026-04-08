@@ -39,6 +39,7 @@ pipeline {
                 }
             }
         }
+
         stage('Check Docker Setup') {
             steps {
                 sh '''
@@ -47,6 +48,8 @@ pipeline {
                 '''
             }
         }
+
+        // 🔥 FIXED DEPLOYMENT
         stage('Deploy via Docker Compose') {
             steps {
                 sh '''
@@ -54,19 +57,38 @@ pipeline {
                 export IMAGE_TAG=$IMAGE_TAG
 
                 docker-compose -f $COMPOSE_FILE down || true
+                docker-compose -f $COMPOSE_FILE up -d
                 '''
             }
         }
 
+        // 🔥 SMART HEALTH CHECK (FIRST-RUN SAFE)
         stage('Health Check') {
             steps {
                 script {
-                    echo "Waiting for application to be ready..."
+                    echo "Checking backend directly..."
 
-                    retry(5) {
+                    // Step 1: Backend check
+                    def backendStatus = sh(
+                        script: 'curl -f http://localhost:5000/api/hello',
+                        returnStatus: true
+                    )
+
+                    if (backendStatus != 0) {
+                        error "❌ Backend is not healthy"
+                    }
+
+                    echo "✅ Backend is UP"
+
+                    // Step 2: Nginx check with retry
+                    echo "Checking via Nginx..."
+
+                    retry(10) {
                         sleep 5
                         sh 'curl -f http://localhost/api/hello'
                     }
+
+                    echo "✅ Nginx routing is UP"
                 }
             }
         }
@@ -88,7 +110,7 @@ pipeline {
                 docker-compose down || true
                 docker-compose up -d
             else
-                echo "No previous version available"
+                echo "⚠️ First deployment - No rollback available"
             fi
             '''
         }
