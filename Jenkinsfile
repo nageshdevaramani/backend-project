@@ -79,8 +79,8 @@ pipeline {
                 export APP_NAME=$APP_NAME
                 export IMAGE_TAG=$PREV_TAG
 
-                docker-compose down || true
-                docker-compose up -d
+                docker ompose down || true
+                docker compose up -d
             else
                 echo "No previous version available"
             fi
