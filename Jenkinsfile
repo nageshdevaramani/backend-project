@@ -39,7 +39,11 @@ pipeline {
                 }
             }
         }
-
+        stage('Check Docker Compose') {
+            steps {
+                sh 'docker compose version'
+            }
+        }
         stage('Deploy via Docker Compose') {
             steps {
                 sh '''
