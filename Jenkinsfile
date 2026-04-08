@@ -43,8 +43,7 @@ pipeline {
             steps {
                 sh '''
                 docker --version
-                docker compose version || true
-                docker-compose --version || true
+                docker-compose version || true
                 '''
             }
         }
@@ -54,8 +53,7 @@ pipeline {
                 export APP_NAME=$APP_NAME
                 export IMAGE_TAG=$IMAGE_TAG
 
-                docker compose -f $COMPOSE_FILE down || true
-                docker compose -f $COMPOSE_FILE up -d
+                docker-compose -f $COMPOSE_FILE down || true
                 '''
             }
         }
@@ -87,8 +85,8 @@ pipeline {
                 export APP_NAME=$APP_NAME
                 export IMAGE_TAG=$PREV_TAG
 
-                docker ompose down || true
-                docker compose up -d
+                docker-compose down || true
+                docker-compose up -d
             else
                 echo "No previous version available"
             fi
