@@ -82,7 +82,7 @@ stage('Health Check') {
                 sh 'curl -f http://nginx/api/hello'
             }
 
-            echo "✅ Nginx routing is working"
+            echo "Nginx routing is working"
         }
     }
 }
