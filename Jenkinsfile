@@ -2,8 +2,14 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_TAG = "${BUILD_NUMBER}"
         APP_NAME = "backend-app"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        CONTAINER_NAME = "backend"
+    }
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
     }
 
     stages {
@@ -16,25 +22,34 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                sh 'docker build -t $APP_NAME:$IMAGE_TAG .'
-            }
-        }
-
-        stage('Save Previous Version') {
-            steps {
                 sh '''
-                PREV_TAG=$(docker ps -a --filter name=backend --format "{{.Image}}" | cut -d: -f2)
-                echo $PREV_TAG > prev_tag.txt || true
+                docker build -t $APP_NAME:$IMAGE_TAG .
                 '''
             }
         }
 
-        stage('Deploy') {
+        stage('Get Previous Version') {
+            steps {
+                script {
+                    sh '''
+                    PREV_TAG=$(docker ps -a --filter "name=$CONTAINER_NAME" --format "{{.Image}}" | cut -d: -f2)
+                    echo $PREV_TAG > prev_tag.txt || true
+                    echo "Previous running version: $PREV_TAG"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy New Version') {
             steps {
                 sh '''
-                export IMAGE_TAG=$IMAGE_TAG
-                docker-compose down
-                docker-compose up -d
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
+
+                docker run -d \
+                  --name $CONTAINER_NAME \
+                  -p 5000:5000 \
+                  $APP_NAME:$IMAGE_TAG
                 '''
             }
         }
@@ -42,10 +57,10 @@ pipeline {
         stage('Health Check') {
             steps {
                 script {
-                    sh 'sleep 15'
+                    sh 'sleep 10'  // wait for app to start
 
                     def status = sh(
-                        script: 'curl -f http://localhost/api/hello',
+                        script: 'curl -f http://localhost:5000/api/hello',
                         returnStatus: true
                     )
 
@@ -59,21 +74,34 @@ pipeline {
 
     post {
         failure {
-            echo 'Rolling back...'
+            echo 'Deployment failed - Rolling back...'
 
             sh '''
             PREV_TAG=$(cat prev_tag.txt)
 
             if [ ! -z "$PREV_TAG" ]; then
-                echo "Rolling back to $PREV_TAG"
+                echo "Rolling back to version: $PREV_TAG"
 
-                export IMAGE_TAG=$PREV_TAG
-                docker-compose down
-                docker-compose up -d
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
+
+                docker run -d \
+                  --name $CONTAINER_NAME \
+                  -p 5000:5000 \
+                  $APP_NAME:$PREV_TAG
             else
-                echo "No previous version found"
+                echo "No previous version available for rollback"
             fi
             '''
+        }
+
+        success {
+            echo 'Deployment successful'
+        }
+
+        always {
+            echo 'Cleaning unused images'
+            sh 'docker image prune -f || true'
         }
     }
 }
