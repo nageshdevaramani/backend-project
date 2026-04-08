@@ -1,24 +1,14 @@
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-
-    image: backend-app:latest
-
+    image: ${APP_NAME}:${IMAGE_TAG}
     container_name: backend
-
     restart: unless-stopped
-
     ports:
       - "5000:5000"
-
-    env_file:
-      - .env
-
     networks:
       - devops-net
 
 networks:
   devops-net:
-    external: true
+    name: devops-net
+    driver: bridge
